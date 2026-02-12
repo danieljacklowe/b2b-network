@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // THIS WAS MISSING VVV
+  url      = env("DATABASE_URL")
+}
+
+model WaitlistApplication {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  linkedIn  String
+  icp       String?
+  dealSize  String?
+  createdAt DateTime @default(now())
+}
