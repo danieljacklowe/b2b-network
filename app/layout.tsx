@@ -6,8 +6,8 @@ import { ClerkProvider } from '@clerk/nextjs';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "B2B Exchange",
-  description: "The private network for elite AEs.",
+  title: "WarmDoor | The AE Intro Marketplace",
+  description: "Stop cold calling. Trade warm introductions with top Account Executives. The exclusive network for quota crushers.",
 };
 
 export default function RootLayout({
