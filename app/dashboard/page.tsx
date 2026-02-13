@@ -1,8 +1,5 @@
-import { UserButton, currentUser } from "@clerk/nextjs/server"; 
-
-// NOTE: If you are on an older Clerk version, use this import instead:
-// import { UserButton, currentUser } from "@clerk/nextjs";
-
+import { UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 export default async function Dashboard() {
   const user = await currentUser();
 
