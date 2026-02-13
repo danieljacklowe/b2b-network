@@ -9,12 +9,13 @@ datasource db {
 }
 
 model WaitlistApplication {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
+  email     String   @unique
   firstName String
   lastName  String
-  email     String   @unique
-  linkedIn  String
-  icp       String?
+  linkedIn  String?
   dealSize  String?
+  icp       String?
   createdAt DateTime @default(now())
+  status    String   @default("PENDING") 
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation"; // <--- Add this
 
 // --- Components ---
 
@@ -49,67 +50,47 @@ function Footer() {
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter(); // <--- Add this
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
 
+    // ... (Your FormData code stays the same) ...
     const formData = new FormData(event.currentTarget);
-    
     const data = {
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
       email: formData.get("email"),
       linkedIn: formData.get("linkedIn"),
       dealSize: formData.get("dealSize"),
-      icp: "WarmDoor Waitlist", 
+      icp: "WarmDoor Waitlist",
     };
 
     try {
       const response = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+         // ... same fetch code ...
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(data),
       });
 
       if (response.ok) {
-        setIsSubmitted(true);
+        router.push("/thank-you"); // <--- Change this! (Redirects user)
       } else {
         alert("Something went wrong. Please try again.");
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error submitting form");
+      // ... same error handling ...
     } finally {
       setIsLoading(false);
     }
   }
 
-  // Success State
-  if (isSubmitted) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-center text-white">
-        <Navbar />
-        <div className="animate-in fade-in zoom-in duration-500 max-w-md rounded-2xl border border-orange-500/20 bg-slate-900 p-10 shadow-2xl shadow-orange-500/10">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-3xl">
-            🔑
-          </div>
-          <h1 className="mb-4 text-3xl font-bold text-white">The Door is Open.</h1>
-          <p className="text-slate-400">
-            Your request to join WarmDoor has been received. We verify every AE manually to ensure quality.
-          </p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-8 text-sm font-medium text-slate-500 hover:text-white"
-          >
-            ← Back to Home
-          </button>
-        </div>
-      </main>
-    );
-  }
+  // DELETE or COMMENT OUT the entire "if (isSubmitted)" block.
+  // We don't need it anymore because we are redirecting!
 
+  
   return (
     <div className="min-h-screen bg-slate-950 selection:bg-orange-500/30">
       <Navbar />
