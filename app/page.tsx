@@ -1,16 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation"; // <--- Add this
+import { useRouter } from "next/navigation";
 
-// --- Components ---
+
 
 function Navbar() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
-          {/* Logo Icon: A Door opening with warmth */}
+          {/* Logo Icon */}
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-white">
               <path fillRule="evenodd" d="M12 2.25a.75.75 0 01.75.75v11.69l3.22-3.22a.75.75 0 111.06 1.06l-4.5 4.5a.75.75 0 01-1.06 0l-4.5-4.5a.75.75 0 111.06-1.06l3.22 3.22V3a.75.75 0 01.75-.75zm-9 13.5a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clipRule="evenodd" />
@@ -18,9 +19,16 @@ function Navbar() {
           </div>
           <span className="text-xl font-bold text-white tracking-tight">Warm<span className="text-orange-500">Door</span></span>
         </div>
-        <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10">
+
+        {/* --- THE FIX IS HERE --- */}
+        <Link 
+          href="/sign-in" 
+          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
+        >
           Member Login
-        </button>
+        </Link>
+        {/* ----------------------- */}
+
       </div>
     </nav>
   );
