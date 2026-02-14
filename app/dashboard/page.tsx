@@ -23,15 +23,44 @@ export default async function Dashboard() {
     });
   }
 
-  // --- VELVET ROPE (PENDING) ---
+ // --- VELVET ROPE (PENDING) ---
   if (dbUser.status === "PENDING") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-center text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-white selection:bg-orange-500/30">
+        {/* Subtle Background Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-orange-600/10 blur-[120px] pointer-events-none" />
+        
         <div className="absolute right-6 top-6"><UserButton afterSignOutUrl="/" /></div>
-        <div className="max-w-md w-full rounded-2xl border border-orange-500/20 bg-slate-900/50 p-10 shadow-2xl backdrop-blur-xl">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-3xl">⏳</div>
-          <h1 className="mb-4 text-3xl font-bold">Profile Under Review</h1>
-          <p className="text-slate-400 mb-6">Welcome, {firstName}. We manually verify every AE to ensure the floor stays high-quality.</p>
+        
+        <div className="max-w-md w-full rounded-3xl border border-white/10 bg-slate-900/40 p-10 shadow-2xl backdrop-blur-xl text-center">
+          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 text-4xl shadow-inner border border-orange-500/20">
+            ⏳
+          </div>
+          
+          <h1 className="mb-3 text-3xl font-bold tracking-tight">Application Received</h1>
+          <p className="text-slate-400 text-lg leading-relaxed mb-8">
+            Welcome, {firstName}. We manually verify every member to ensure 
+            <span className="text-white font-medium"> WarmDoor</span> remains a high-signal network for elite AEs.
+          </p>
+
+          <div className="space-y-4 text-left border-t border-white/5 pt-8">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 h-5 w-5 rounded-full bg-orange-500/10 border border-orange-500/40 flex items-center justify-center text-[10px] text-orange-500 font-bold">1</div>
+              <p className="text-sm text-slate-300"><span className="text-white font-semibold">Verification:</span> We are checking your LinkedIn and deal history.</p>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="mt-1 h-5 w-5 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[10px] text-slate-500 font-bold">2</div>
+              <p className="text-sm text-slate-500"><span className="font-semibold">Activation:</span> Once approved, you'll get full access to the trading floor.</p>
+            </div>
+          </div>
+
+          <div className="mt-10 p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
+            <p className="text-xs text-orange-400 font-medium uppercase tracking-widest">Typical review time: 2-4 hours</p>
+          </div>
+          
+          <p className="mt-8 text-xs text-slate-600">
+            Want to speed this up? <a href="https://linkedin.com/in/your-profile" target="_blank" className="text-slate-400 underline hover:text-orange-400 transition-colors">DM the founder</a>.
+          </p>
         </div>
       </div>
     );

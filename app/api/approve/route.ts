@@ -1,44 +1,53 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { Resend } from "resend";
+import { Resend } from 'resend';
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { id, email, firstName } = body;
+    const formData = await req.formData();
+    const userId = formData.get("userId") as string;
+    const userEmail = formData.get("userEmail") as string;
+    const firstName = formData.get("firstName") as string;
 
-    // Security Check: Ensure the requester has the secret key
-    // (In a real app, we'd use session auth, but this works for now)
-    if (body.secret !== process.env.ADMIN_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!userId || !userEmail) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 1. Update Database Status
+    // 1. Update the database to APPROVED
     await prisma.waitlistApplication.update({
-      where: { id },
+      where: { id: userId },
       data: { status: "APPROVED" },
     });
 
-    // 2. Send the "You're In" Email
-    // NOTE: Replace 'YOUR_EMAIL@gmail.com' with your actual email for testing!
+    // 2. Send the "You're In" Email via Resend
     await resend.emails.send({
-      from: "WarmDoor <onboarding@resend.dev>",
-      to: "danieljacklowe@gmail.com", // Change this to 'email' when you upgrade Resend
-      subject: "Your WarmDoor Access 🔑",
+      from: 'WarmDoor <onboarding@resend.dev>', // Change to your verified domain later
+      to: userEmail,
+      subject: "You're in! The trading floor is open.",
       html: `
-        <h1>Welcome to the Club, ${firstName}.</h1>
-        <p>Your application to WarmDoor has been approved.</p>
-        <p>You can now access the trading floor.</p>
-        <br />
-        <a href="https://warmdoor.vercel.app/login" style="background-color: #ea580c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Login Now</a>
-      `,
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #ea580c;">Welcome to WarmDoor, ${firstName || 'User'}!</h2>
+          <p>Your application has been approved by our team.</p>
+          <p>You now have full access to the trading floor. You can post your own asks or help others with intros.</p>
+          <div style="margin-top: 25px;">
+            <a href="https://your-actual-domain.com/dashboard" 
+               style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+               Enter the Trading Floor
+            </a>
+          </div>
+          <p style="margin-top: 30px; font-size: 12px; color: #666;">Stay warm,<br>The WarmDoor Team</p>
+        </div>
+      `
     });
 
-    return NextResponse.json({ success: true });
+    // 3. Redirect back to admin with success
+    return NextResponse.redirect(new URL("/admin?success=approved", req.url), 303);
+
   } catch (error) {
-    return NextResponse.json({ error: "Error approving user" }, { status: 500 });
+    console.error("Approval error:", error);
+    return NextResponse.redirect(new URL("/admin?error=failed", req.url), 303);
   }
 }
