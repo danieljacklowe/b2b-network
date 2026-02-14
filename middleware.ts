@@ -5,14 +5,15 @@ const isPublicRoute = createRouteMatcher([
   "/", 
   "/sign-in(.*)", 
   "/sign-up(.*)",
-  "/api/waitlist", // Public API for the form
-  "/api/approve",  // Public API (secured by secret key inside)
+  "/api/waitlist", 
+  "/api/approve",  
+  "/api/webhooks/clerk", // <--- ADD THIS LINE
   "/thank-you"
 ]);
 
 export default clerkMiddleware((auth, req) => {
   if (!isPublicRoute(req)) {
-    auth().protect(); // Protect everything else (like /dashboard, /admin)
+    auth().protect(); 
   }
 });
 
