@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       // 2. Alert Email to YOU (The Admin)
       await resend.emails.send({
         from: 'WarmDoor Bot <onboarding@resend.dev>',
-        to: 'YOUR_ACTUAL_EMAIL@domain.com', // ⚠️ CHANGE THIS TO YOUR REAL INBOX EMAIL
+        to: 'WarmDoor <hello@getwarmdoor.com>', // ⚠️ CHANGE THIS TO YOUR REAL INBOX EMAIL
         subject: `🚨 New Waitlist Application: ${userEmail}`,
         html: `
           <div style="font-family: sans-serif; padding: 20px; border: 2px solid #ea580c; border-radius: 8px;">

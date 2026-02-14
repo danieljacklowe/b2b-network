@@ -78,7 +78,7 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            Access Restricted to Quota-Carrying AEs
+            Access Restricted to Vetted and Verified AEs
           </div>
 
           <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
@@ -95,7 +95,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-left">
             <Feature title="Peer-to-Peer" desc="Trade intros with verified AEs." icon="🤝" />
-            <Feature title="Zero Spam" desc="Strict 'No Recruiter' policy." icon="🚫" />
+            <Feature title="Zero Spam" desc="Vetted and Verified AEs only." icon="🚫" />
             <Feature title="Credit System" desc="Earn credits for every intro." icon="💳" />
           </div>
         </div>

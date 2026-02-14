@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     // IMPORTANT: Resend 'onboarding@resend.dev' only sends to YOUR email address!
     try {
       await resend.emails.send({
-        from: 'WarmDoor <onboarding@resend.dev>',
+        from: 'WarmDoor <hello@getwarmdoor.com>',
         to: userEmail, 
         subject: "You're in! The trading floor is open.",
         html: `<p>Welcome, ${firstName}!</p>`
