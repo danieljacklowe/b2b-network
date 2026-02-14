@@ -19,3 +19,12 @@ model WaitlistApplication {
   createdAt DateTime @default(now())
   status    String   @default("PENDING") 
 }
+model Opportunity {
+  id        String   @id @default(cuid())
+  userEmail String
+  userName  String
+  company   String
+  role      String
+  ask       String
+  createdAt DateTime @default(now())
+}
