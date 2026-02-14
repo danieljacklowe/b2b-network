@@ -1,32 +1,51 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
 
 export default function ApproveButton({ id, email, firstName, secret }: any) {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  async function handleApprove() {
-    if (!confirm(`Approve ${firstName}? This will send an email.`)) return;
+  const handleApprove = async () => {
+    setStatus('loading');
 
-    setLoading(true);
-    await fetch("/api/approve", {
-      method: "POST",
-      body: JSON.stringify({ id, email, firstName, secret }),
-    });
-    
-    setLoading(false);
-    router.refresh(); // Reloads the page to show "APPROVED" status
+    try {
+      const res = await fetch("/api/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: id, userEmail: email, firstName }),
+      });
+
+      // We expect JSON { success: true } from the server now
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setStatus('success');
+      } else {
+        setStatus('error');
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus('error');
+    }
+  };
+
+  if (status === 'success') {
+    return (
+      <span className="text-green-600 font-bold flex items-center gap-1">
+        ✅ Approved
+      </span>
+    );
   }
 
   return (
     <button
       onClick={handleApprove}
-      disabled={loading}
-      className="rounded bg-orange-600 px-3 py-1 text-xs font-bold text-white hover:bg-orange-500 disabled:opacity-50"
+      disabled={status === 'loading'}
+      className={`rounded px-3 py-1 text-sm font-medium text-white transition-colors ${
+        status === 'error' ? 'bg-red-600' : 'bg-orange-500 hover:bg-orange-600'
+      }`}
     >
-      {loading ? "Sending..." : "Approve"}
+      {status === 'loading' ? 'Processing...' : status === 'error' ? 'Try Again' : 'Approve'}
     </button>
   );
 }
