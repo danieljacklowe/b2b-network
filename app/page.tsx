@@ -1,10 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
-
+// --- Components ---
 
 function Navbar() {
   return (
@@ -19,16 +16,26 @@ function Navbar() {
           </div>
           <span className="text-xl font-bold text-white tracking-tight">Warm<span className="text-orange-500">Door</span></span>
         </div>
-
-        {/* --- THE FIX IS HERE --- */}
-        <Link 
-          href="/sign-in" 
-          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
-        >
-          Member Login
-        </Link>
-        {/* ----------------------- */}
-
+        
+        <div className="flex items-center gap-4">
+          <SignedOut>
+            <Link 
+              href="/sign-in" 
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            >
+              Member Login
+            </Link>
+          </SignedOut>
+          
+          <SignedIn>
+            <Link 
+              href="/dashboard" 
+              className="rounded-full border border-orange-500/50 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-500 transition-colors hover:bg-orange-500/20"
+            >
+              Go to Dashboard
+            </Link>
+          </SignedIn>
+        </div>
       </div>
     </nav>
   );
@@ -57,48 +64,6 @@ function Footer() {
 // --- Main Page ---
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter(); // <--- Add this
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsLoading(true);
-
-    // ... (Your FormData code stays the same) ...
-    const formData = new FormData(event.currentTarget);
-    const data = {
-      firstName: formData.get("firstName"),
-      lastName: formData.get("lastName"),
-      email: formData.get("email"),
-      linkedIn: formData.get("linkedIn"),
-      dealSize: formData.get("dealSize"),
-      icp: "WarmDoor Waitlist",
-    };
-
-    try {
-      const response = await fetch("/api/waitlist", {
-         // ... same fetch code ...
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        router.push("/thank-you"); // <--- Change this! (Redirects user)
-      } else {
-        alert("Something went wrong. Please try again.");
-      }
-    } catch (error) {
-      // ... same error handling ...
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // DELETE or COMMENT OUT the entire "if (isSubmitted)" block.
-  // We don't need it anymore because we are redirecting!
-
-  
   return (
     <div className="min-h-screen bg-slate-950 selection:bg-orange-500/30">
       <Navbar />
@@ -113,7 +78,7 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            Access Restricted to Vetted and Verified AEs
+            Access Restricted to Quota-Carrying AEs
           </div>
 
           <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
@@ -130,75 +95,48 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-left">
             <Feature title="Peer-to-Peer" desc="Trade intros with verified AEs." icon="🤝" />
-            <Feature title="Zero Spam" desc="All AEs are Vetted and Verified." icon="🚫" />
+            <Feature title="Zero Spam" desc="Strict 'No Recruiter' policy." icon="🚫" />
             <Feature title="Credit System" desc="Earn credits for every intro." icon="💳" />
           </div>
         </div>
 
-        {/* Right Column: The Form */}
+        {/* Right Column: The 1-Click Sign Up */}
         <div className="w-full max-w-md flex-shrink-0">
-          <div className="relative rounded-3xl border border-white/10 bg-slate-900/50 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="relative rounded-3xl border border-white/10 bg-slate-900/50 p-10 shadow-2xl backdrop-blur-xl text-center">
             {/* Glow Effect behind form */}
             <div className="absolute -inset-1 -z-10 rounded-3xl bg-gradient-to-br from-orange-500/20 to-red-500/20 opacity-50 blur-xl"></div>
             
-            <h2 className="mb-6 text-xl font-semibold text-white">Apply for Access</h2>
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-3xl shadow-lg shadow-orange-500/10">
+              🔑
+            </div>
             
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="firstName"
-                  required
-                  placeholder="First Name"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-slate-500 focus:border-orange-500 focus:bg-white/10 focus:outline-none transition-all"
-                />
-                <input
-                  type="text"
-                  name="lastName"
-                  required
-                  placeholder="Last Name"
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-slate-500 focus:border-orange-500 focus:bg-white/10 focus:outline-none transition-all"
-                />
-              </div>
-
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="Work Email"
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-slate-500 focus:border-orange-500 focus:bg-white/10 focus:outline-none transition-all"
-              />
-
-              <input
-                type="url"
-                name="linkedIn"
-                placeholder="LinkedIn URL (Mandatory)"
-                required
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-slate-500 focus:border-orange-500 focus:bg-white/10 focus:outline-none transition-all"
-              />
-
-              <select
-                name="dealSize"
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white focus:border-orange-500 focus:bg-white/10 focus:outline-none transition-all appearance-none"
+            <h2 className="mb-2 text-2xl font-bold text-white">Join the Network</h2>
+            <p className="mb-8 text-sm text-slate-400">
+              Connect your professional account to request access.
+            </p>
+            
+            {/* Smart Buttons: Change based on auth state */}
+            <SignedOut>
+              <Link 
+                href="/sign-in"
+                className="inline-block w-full rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 hover:from-orange-500 hover:to-red-500 transition-all transform active:scale-[0.98]"
               >
-                <option className="bg-slate-900" value="SMB">Segment: SMB</option>
-                <option className="bg-slate-900" value="Mid-Market">Segment: Mid-Market</option>
-                <option className="bg-slate-900" value="Enterprise">Segment: Enterprise</option>
-                <option className="bg-slate-900" value="Strategic">Segment: Strategic</option>
-              </select>
+                Continue with SSO →
+              </Link>
+            </SignedOut>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-orange-500/25 hover:from-orange-500 hover:to-red-500 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 transition-all transform active:scale-[0.98]"
+            <SignedIn>
+              <Link 
+                href="/dashboard"
+                className="inline-block w-full rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 hover:from-orange-500 hover:to-red-500 transition-all transform active:scale-[0.98]"
               >
-                {isLoading ? "Unlocking..." : "Request Access →"}
-              </button>
-              
-              <p className="text-center text-xs text-slate-500">
-                100% anonymous until a trade is accepted.
-              </p>
-            </form>
+                Enter Trading Floor →
+              </Link>
+            </SignedIn>
+            
+            <p className="mt-6 text-xs text-slate-500">
+              By joining, you agree to our strict "No Spam" policy.
+            </p>
           </div>
         </div>
       </main>
@@ -207,4 +145,3 @@ export default function Home() {
     </div>
   );
 }
-// Triggering Vercel rebuild for env vars

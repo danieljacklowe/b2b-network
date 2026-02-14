@@ -1,12 +1,67 @@
 import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 export default async function Dashboard() {
   const user = await currentUser();
+  
+  // Failsafe: If no user, don't render
+  if (!user) return null;
 
+  const email = user.emailAddresses[0].emailAddress;
+  const firstName = user.firstName || "User";
+  const lastName = user.lastName || "";
+
+  // 1. Check if user is in our database
+  let dbUser = await prisma.waitlistApplication.findUnique({
+    where: { email: email },
+  });
+
+  // 2. If they just signed up via Clerk SSO, add them to our database as PENDING
+  if (!dbUser) {
+    dbUser = await prisma.waitlistApplication.create({
+      data: {
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        status: "PENDING",
+      },
+    });
+  }
+
+  // --- UI STATE 1: THE VELVET ROPE (PENDING) ---
+  if (dbUser.status === "PENDING") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-center text-white selection:bg-orange-500/30">
+        <div className="absolute right-6 top-6">
+          <UserButton afterSignOutUrl="/" />
+        </div>
+        <div className="max-w-md w-full animate-in fade-in zoom-in duration-500 rounded-2xl border border-orange-500/20 bg-slate-900/50 p-10 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-3xl">
+            ⏳
+          </div>
+          <h1 className="mb-4 text-3xl font-bold text-white">Profile Under Review</h1>
+          <p className="text-slate-400 mb-6">
+            Welcome, {firstName}. We manually verify every Account Executive to ensure the trading floor stays high-quality and spam-free.
+          </p>
+          <div className="rounded-lg bg-white/5 p-4 border border-white/10">
+            <p className="text-sm text-slate-300">
+              Status: <span className="font-bold text-orange-500 animate-pulse">Verification Pending</span>
+            </p>
+          </div>
+          <p className="mt-6 text-xs text-slate-500">
+            You will receive an email as soon as you are approved.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- UI STATE 2: THE TRADING FLOOR (APPROVED) ---
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-orange-500/30">
-      
-      {/* Navbar */}
       <nav className="border-b border-white/10 bg-slate-900/50 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
@@ -24,36 +79,17 @@ export default async function Dashboard() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="mx-auto max-w-7xl px-6 py-12">
         <header className="mb-12">
-          <h1 className="text-3xl font-bold">Welcome back, {user?.firstName} 👋</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {firstName} 👋</h1>
           <p className="text-slate-400">The trading floor is active. You have 3 credits available.</p>
         </header>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 sm:grid-cols-3 mb-12">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-sm font-medium text-slate-400">Total Credits</h3>
-            <p className="mt-2 text-3xl font-bold text-white">3</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-sm font-medium text-slate-400">Active Trades</h3>
-            <p className="mt-2 text-3xl font-bold text-white">0</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-sm font-medium text-slate-400">Network Reach</h3>
-            <p className="mt-2 text-3xl font-bold text-white">1,240</p>
-          </div>
-        </div>
-
         {/* Live Opportunities (Mock Data) */}
-        <h2 className="mb-6 text-xl font-semibold">Recent Opportunities</h2>
         <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
           {[
             { company: "Salesforce", role: "VP of Sales", ask: "Intro to Oracle", date: "2m ago" },
             { company: "HubSpot", role: "Director of Marketing", ask: "Intro to Stripe", date: "15m ago" },
-            { company: "Notion", role: "Head of Growth", ask: "Intro to Airbnb", date: "1h ago" },
           ].map((item, i) => (
             <div key={i} className="flex items-center justify-between border-b border-white/5 p-6 last:border-0 hover:bg-white/5 transition-colors">
               <div>
@@ -62,11 +98,7 @@ export default async function Dashboard() {
               </div>
               <div className="text-right">
                 <span className="block text-sm font-medium text-orange-500">Seeking: {item.ask}</span>
-                <span className="text-xs text-slate-500">{item.date}</span>
               </div>
-              <button className="ml-4 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20">
-                View
-              </button>
             </div>
           ))}
         </div>
