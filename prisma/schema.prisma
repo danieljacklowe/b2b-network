@@ -9,15 +9,19 @@ datasource db {
 }
 
 model WaitlistApplication {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  linkedIn  String?
-  dealSize  String?
-  icp       String?
-  createdAt DateTime @default(now())
-  status    String   @default("PENDING") 
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  linkedIn     String?
+  dealSize     String?
+  icp          String?
+  createdAt    DateTime @default(now())
+  status       String   @default("PENDING") 
+  
+  // ADD THESE TWO LINES BELOW VVV
+  rating       Float    @default(5.0)
+  reviewCount  Int      @default(0)
 }
 model Opportunity {
   id        String   @id @default(cuid())
