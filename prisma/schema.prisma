@@ -28,3 +28,19 @@ model Opportunity {
   ask       String
   createdAt DateTime @default(now())
 }
+model Trade {
+  id                  String   @id @default(cuid())
+  opportunityId       String
+  company             String
+  requesterEmail      String
+  offererEmail        String
+  offererName         String
+  
+  // The proof fields
+  contactLinkedIn     String   
+  relationshipContext String   
+  
+  // Statuses: PENDING, ACCEPTED, COMPLETED
+  status              String   @default("PENDING") 
+  createdAt           DateTime @default(now())
+}
