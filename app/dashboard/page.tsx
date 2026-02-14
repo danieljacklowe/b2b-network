@@ -59,7 +59,7 @@ export default async function Dashboard() {
           </div>
           
           <p className="mt-8 text-xs text-slate-600">
-            Want to speed this up? <a href="https://linkedin.com/in/your-profile" target="_blank" className="text-slate-400 underline hover:text-orange-400 transition-colors">DM the founder</a>.
+            Want to speed this up? <a href="https://linkedin.com/in/danieljacklowe" target="_blank" className="text-slate-400 underline hover:text-orange-400 transition-colors">DM the founder</a>.
           </p>
         </div>
       </div>
