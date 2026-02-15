@@ -1,4 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server';
+import { UserButton } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import { PrismaClient } from '@prisma/client';
 import ConnectionForm from './ConnectionForm';
@@ -48,11 +49,30 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
-        
-        <div className="flex justify-between items-end mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {dbUser.firstName}!
-          </h1>
+        <div className="flex justify-between items-center mb-8 border-b pb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome back, {dbUser?.firstName}!
+            </h1>
+            
+            {/* My Social Proof Badge */}
+            <div className="mt-2">
+              {(dbUser?.reviewCount ?? 0) > 0 ? (
+                <span className="text-sm font-bold text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-300 shadow-sm">
+                  ★ {Number(dbUser?.rating).toFixed(1)} ({dbUser?.reviewCount} Reviews)
+                </span>
+              ) : (
+                <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                  New Member
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* THE CLERK PROFILE & SIGN OUT BUTTON */}
+          <div className="bg-white p-1 rounded-full shadow-sm border border-gray-200 hover:shadow-md transition">
+             <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
         
         {/* Pinned at the top: Actionable Items */}

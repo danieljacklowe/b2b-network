@@ -39,7 +39,9 @@ model Trade {
   offererEmail        String
   offererName         String
   contactLinkedIn     String   
-  relationshipContext String   
+  relationshipContext String 
+  rating        Int?     // Will hold 1, 2, 3, 4, or 5
+  isRated       Boolean  @default(false)  
   status              String   @default("PENDING") 
   createdAt           DateTime @default(now())
 }
@@ -48,7 +50,10 @@ model User {
   id          String       @id @default(cuid())
   email       String       @unique
   firstName   String?
-  connections Connection[] 
+  rating        Float    @default(0) // Their average star rating
+  reviewCount   Int      @default(0) // How many reviews they've received
+  connections   Connection[]
+  credits Int @default(3)
   createdAt   DateTime     @default(now())
 }
 

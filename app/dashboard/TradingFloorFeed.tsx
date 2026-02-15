@@ -2,26 +2,23 @@
 
 import { useState, useEffect } from 'react';
 
-type Opportunity = {
+type Ask = {
   id: string;
-  userEmail: string;
   userName: string;
+  userEmail: string;
   company: string;
   role: string;
   ask: string;
+  rating: number;
+  reviewCount: number;
   createdAt: string;
 };
 
 export default function TradingFloorFeed({ currentUserEmail, currentUserName }: { currentUserEmail: string, currentUserName: string }) {
-  const [feed, setFeed] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feed, setFeed] = useState<Ask[]>([]);
   const [newAsk, setNewAsk] = useState({ company: '', role: '', ask: '' });
-
-  // --- NEW: Modal State ---
-  const [selectedAsk, setSelectedAsk] = useState<Opportunity | null>(null);
-  const [tradeForm, setTradeForm] = useState({ contactLinkedIn: '', relationshipContext: '' });
-  const [isSubmittingTrade, setIsSubmittingTrade] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/opportunities')
@@ -35,164 +32,115 @@ export default function TradingFloorFeed({ currentUserEmail, currentUserName }: 
   const handlePostAsk = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
     const res = await fetch('/api/opportunities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userEmail: currentUserEmail,
-        userName: currentUserName || 'WarmDoor Member',
-        company: newAsk.company,
-        role: newAsk.role,
-        ask: newAsk.ask,
+        userName: currentUserName,
+        ...newAsk
       })
     });
 
     if (res.ok) {
       const createdAsk = await res.json();
-      setFeed([createdAsk, ...feed]); 
-      setNewAsk({ company: '', role: '', ask: '' }); 
+      setFeed([createdAsk, ...feed]);
+      setNewAsk({ company: '', role: '', ask: '' });
       window.dispatchEvent(new Event('askPosted'));
     }
     setIsSubmitting(false);
   };
 
-  // --- NEW: Handle Trade Submission ---
-  const handleSubmitTrade = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedAsk) return;
-    
-    setIsSubmittingTrade(true);
-
+  const handleHelp = async (ask: Ask) => {
     const res = await fetch('/api/trades', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        opportunityId: selectedAsk.id,
-        company: selectedAsk.company,
-        requesterEmail: selectedAsk.userEmail, // The person who posted the ask
-        offererEmail: currentUserEmail,        // YOU (the person helping)
+        opportunityId: ask.id,
+        requesterEmail: ask.userEmail,
+        offererEmail: currentUserEmail,
         offererName: currentUserName,
-        contactLinkedIn: tradeForm.contactLinkedIn,
-        relationshipContext: tradeForm.relationshipContext,
+        company: ask.company
       })
     });
 
     if (res.ok) {
-      alert("Trade submitted! We'll notify the requester.");
-      setSelectedAsk(null); // Close modal
-      setTradeForm({ contactLinkedIn: '', relationshipContext: '' }); // Reset form
-    } else {
-      alert("Something went wrong. Please try again.");
+      alert("Offer sent! Check your Deal Desk to track it.");
+      window.dispatchEvent(new Event('askPosted')); 
     }
-    setIsSubmittingTrade(false);
   };
 
+  if (loading) return <div className="text-gray-500 animate-pulse py-4">Loading the Trading Floor...</div>;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 relative">
+    <div className="max-w-4xl mx-auto space-y-8 mb-12">
       
-      {/* 1. Post a New Ask Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Post a Request</h2>
+      {/* Post a New Ask Box */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Post a Request</h3>
         <form onSubmit={handlePostAsk} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <input required placeholder="Target Company (e.g. Stripe)" className="w-full p-3 border rounded-md"
-              value={newAsk.company} onChange={e => setNewAsk({...newAsk, company: e.target.value})} />
-            <input required placeholder="Target Role (e.g. VP of Engineering)" className="w-full p-3 border rounded-md"
-              value={newAsk.role} onChange={e => setNewAsk({...newAsk, role: e.target.value})} />
+          <div className="flex gap-4">
+            <input required type="text" placeholder="Target Company (e.g. Stripe)" className="w-1/2 p-3 border rounded-md" value={newAsk.company} onChange={e => setNewAsk({...newAsk, company: e.target.value})} />
+            <input required type="text" placeholder="Target Role (e.g. VP of Sales)" className="w-1/2 p-3 border rounded-md" value={newAsk.role} onChange={e => setNewAsk({...newAsk, role: e.target.value})} />
           </div>
-          <textarea required placeholder="Why do you want to meet them? (Keep it concise & high-signal)" className="w-full p-3 border rounded-md h-20"
-            value={newAsk.ask} onChange={e => setNewAsk({...newAsk, ask: e.target.value})} />
-          <button type="submit" disabled={isSubmitting} className="bg-orange-600 text-white font-bold py-2 px-6 rounded-md hover:bg-orange-700 transition">
-            {isSubmitting ? 'Posting...' : 'Post to Trading Floor'}
+          <textarea required placeholder="Why do you want to meet them? What is the mutual value?" className="w-full p-3 border rounded-md h-24" value={newAsk.ask} onChange={e => setNewAsk({...newAsk, ask: e.target.value})} />
+          <button type="submit" disabled={isSubmitting} className="w-full bg-orange-600 text-white font-bold py-3 rounded-md hover:bg-orange-700 transition">
+            {isSubmitting ? 'Posting...' : 'Post to Trading Floor (Free)'}
           </button>
         </form>
       </div>
 
-      {/* 2. The Live Feed Section */}
+      {/* The Feed */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-700 border-b pb-2">Active Requests</h3>
+        <h3 className="text-xl font-bold text-gray-900 border-b pb-2">Live Trading Floor</h3>
         
-        {loading ? (
-          <p className="text-gray-500 animate-pulse">Loading the floor...</p>
-        ) : feed.length === 0 ? (
-          <p className="text-gray-500">The floor is quiet. Be the first to post a request!</p>
+        {feed.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">The floor is quiet. Post the first request!</p>
         ) : (
-          feed.map((opp) => (
-            <div key={opp.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start">
-              <div>
+          feed.map(ask => (
+            <div key={ask.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center gap-6">
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-bold text-gray-900">{opp.userName}</span>
-                  <span className="text-gray-400 text-sm">is looking for an intro to:</span>
+                  <span className="font-bold text-gray-900">{ask.userName}</span>
+                  
+                  {/* NEW: Social Proof Rating Badge */}
+                  {ask.reviewCount > 0 ? (
+                    <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full border border-yellow-300">
+                      ★ {Number(ask.rating).toFixed(1)} ({ask.reviewCount})
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">
+                      New Member
+                    </span>
+                  )}
+                  
+                  <span className="text-gray-400 text-sm ml-2">is looking for an intro to:</span>
                 </div>
-                <h4 className="text-xl font-extrabold text-orange-600">
-                  {opp.role} @ {opp.company}
+                
+                <h4 className="text-lg font-bold text-orange-600 mb-2">
+                  {ask.role} <span className="text-gray-400 font-normal">at</span> {ask.company}
                 </h4>
-                <p className="text-gray-600 mt-2 whitespace-pre-wrap">{opp.ask}</p>
+                <div className="bg-gray-50 p-4 rounded-md text-gray-700 text-sm italic border border-gray-100">
+                  "{ask.ask}"
+                </div>
               </div>
-              
-              {opp.userEmail !== currentUserEmail && (
-                <button 
-                  onClick={() => setSelectedAsk(opp)} // <-- THIS OPENS THE MODAL
-                  className="bg-gray-900 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-800 transition shrink-0 ml-4">
-                  I Can Help 🤝
-                </button>
+
+              {/* Action Button */}
+              {ask.userEmail !== currentUserEmail && (
+                <div className="w-48">
+                  <button 
+                    onClick={() => handleHelp(ask)}
+                    className="w-full bg-gray-900 text-white font-bold py-3 px-4 rounded-md hover:bg-gray-800 transition shadow-sm">
+                    I Can Help
+                  </button>
+                  <p className="text-center text-xs text-gray-400 mt-2">Earn 1 Credit</p>
+                </div>
               )}
             </div>
           ))
         )}
       </div>
-
-      {/* --- NEW: The "I Can Help" Modal Overlay --- */}
-      {selectedAsk && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Fulfill the Request</h3>
-            <p className="text-gray-600 mb-6">
-              You are offering to connect <span className="font-semibold">{selectedAsk.userName}</span> with a <span className="font-semibold">{selectedAsk.role} at {selectedAsk.company}</span>.
-            </p>
-            
-            <form onSubmit={handleSubmitTrade} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Contact's LinkedIn URL</label>
-                <input 
-                  required 
-                  type="url"
-                  placeholder="https://linkedin.com/in/their-profile" 
-                  className="w-full p-3 border rounded-md"
-                  value={tradeForm.contactLinkedIn} 
-                  onChange={e => setTradeForm({...tradeForm, contactLinkedIn: e.target.value})} 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Context (How well do you know them?)</label>
-                <textarea 
-                  required 
-                  placeholder="e.g. We were co-founders. I can text them right now to see if they are open to a chat." 
-                  className="w-full p-3 border rounded-md h-24"
-                  value={tradeForm.relationshipContext} 
-                  onChange={e => setTradeForm({...tradeForm, relationshipContext: e.target.value})} 
-                />
-              </div>
-              
-              <div className="flex gap-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setSelectedAsk(null)} 
-                  className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-md hover:bg-gray-200 transition">
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmittingTrade}
-                  className="flex-1 bg-orange-600 text-white font-bold py-3 rounded-md hover:bg-orange-700 transition">
-                  {isSubmittingTrade ? 'Submitting...' : 'Submit Intro Offer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
