@@ -1,236 +1,70 @@
-import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
-import { PrismaClient } from "@prisma/client";
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { PrismaClient } from '@prisma/client';
+import ConnectionForm from './ConnectionForm';
+import MyTrades from './MyTrades';
+import DashboardTabs from './DashboardTabs'; // NEW IMPORT
 
 const prisma = new PrismaClient();
 
-export default async function Dashboard() {
-  const user = await currentUser();
-  if (!user) return null;
+export default async function DashboardPage() {
+  const clerkUser = await currentUser();
+  
+  if (!clerkUser) {
+    redirect('/sign-in');
+  }
 
-  const email = user.emailAddresses[0].emailAddress;
-  const firstName = user.firstName || "User";
-  const lastName = user.lastName || "";
+  const email = clerkUser.emailAddresses[0].emailAddress;
 
-  // 1. Check user status
-  let dbUser = await prisma.waitlistApplication.findUnique({
+  let dbUser = await prisma.user.findUnique({
     where: { email: email },
+    include: {
+      _count: { select: { connections: true } }
+    }
   });
 
   if (!dbUser) {
-    dbUser = await prisma.waitlistApplication.create({
-      data: { email, firstName, lastName, status: "PENDING", linkedIn: "", dealSize: "", icp: "" },
+    dbUser = await prisma.user.create({
+      data: {
+        email: email,
+        firstName: clerkUser.firstName || '',
+      },
+      include: {
+        _count: { select: { connections: true } }
+      }
     });
   }
 
- // --- VELVET ROPE (PENDING) ---
-  if (dbUser.status === "PENDING") {
+  // THE GATEKEEPER
+  if (dbUser._count.connections < 5) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-white selection:bg-orange-500/30">
-        {/* Subtle Background Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-orange-600/10 blur-[120px] pointer-events-none" />
-        
-        <div className="absolute right-6 top-6"><UserButton afterSignOutUrl="/" /></div>
-        
-        <div className="max-w-md w-full rounded-3xl border border-white/10 bg-slate-900/40 p-10 shadow-2xl backdrop-blur-xl text-center">
-          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 text-4xl shadow-inner border border-orange-500/20">
-            ⏳
-          </div>
-          
-          <h1 className="mb-3 text-3xl font-bold tracking-tight">Application Received</h1>
-          <p className="text-slate-400 text-lg leading-relaxed mb-8">
-            Welcome, {firstName}. We manually verify every member to ensure 
-            <span className="text-white font-medium"> WarmDoor</span> remains a high-signal network for elite AEs.
-          </p>
-
-          <div className="space-y-4 text-left border-t border-white/5 pt-8">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 h-5 w-5 rounded-full bg-orange-500/10 border border-orange-500/40 flex items-center justify-center text-[10px] text-orange-500 font-bold">1</div>
-              <p className="text-sm text-slate-300"><span className="text-white font-semibold">Verification:</span> We are checking your LinkedIn and deal history.</p>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="mt-1 h-5 w-5 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[10px] text-slate-500 font-bold">2</div>
-              <p className="text-sm text-slate-500"><span className="font-semibold">Activation:</span> Once approved, you'll get full access to the trading floor.</p>
-            </div>
-          </div>
-
-          <div className="mt-10 p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
-            <p className="text-xs text-orange-400 font-medium uppercase tracking-widest">Typical review time: 2-4 hours</p>
-          </div>
-          
-          <p className="mt-8 text-xs text-slate-600">
-            Want to speed this up? <a href="https://linkedin.com/in/danieljacklowe" target="_blank" className="text-slate-400 underline hover:text-orange-400 transition-colors">DM the founder</a>.
-          </p>
-        </div>
+      <div className="min-h-screen bg-gray-50 py-10">
+        <ConnectionForm userId={dbUser.id} currentCount={dbUser._count.connections} />
       </div>
     );
   }
 
-const myAsks = await prisma.opportunity.findMany({
-  where: { userEmail: email },
-  orderBy: { createdAt: 'desc' }
-});
-
-  // 2. Fetch LIVE Data
-  const opportunities = await prisma.opportunity.findMany({ orderBy: { createdAt: 'desc' } });
-  
-  // Add this near your other prisma fetches
-  const activeIntros = await prisma.trade.findMany({
-    where: { 
-      OR: [{ requesterEmail: email }, { offererEmail: email }],
-      status: "ACCEPTED" 
-    },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const incomingOffers = await prisma.trade.findMany({
-    where: { requesterEmail: email, status: "PENDING" },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  // --- THE TRADING FLOOR (APPROVED) ---
+  // THE TRADING FLOOR
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-orange-500/30 pb-20">
-      <nav className="border-b border-white/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 font-bold">W</div>
-            <span className="text-xl font-bold">Warm<span className="text-orange-500">Door</span></span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">Rating: <span className="font-bold text-yellow-500">{dbUser.rating} ⭐</span></span>
-            <UserButton afterSignOutUrl="/" />
-          </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        
+        <div className="flex justify-between items-end mb-8 border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {dbUser.firstName}!
+          </h1>
         </div>
-      </nav>
-
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        {/* ACTION CENTER */}
-        {incomingOffers.length > 0 && (
-          <div className="mb-12 rounded-xl border border-orange-500/30 bg-orange-500/5 p-6">
-            <h2 className="mb-4 text-lg font-bold text-orange-500">Incoming Offers ({incomingOffers.length})</h2>
-            <div className="grid gap-4">
-              {incomingOffers.map((offer) => (
-                <div key={offer.id} className="rounded-lg border border-white/10 bg-slate-900 p-5">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{offer.offererName} offered help for {offer.company}</p>
-                      <p className="text-xs text-slate-400 mt-1">Context: {offer.relationshipContext}</p>
-                    </div>
-                    <form action="/api/trade/accept" method="POST">
-                      <input type="hidden" name="tradeId" value={offer.id} />
-                      <button type="submit" className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold hover:bg-green-500">Accept</button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-{/* SECTION: ACTIVE INTROS */}
-        {activeIntros.length > 0 && (
-          <div className="mb-12 rounded-xl border border-green-500/30 bg-green-500/5 p-6">
-            <h2 className="mb-4 text-lg font-bold text-green-500">Active Connections</h2>
-            <div className="grid gap-4">
-              {activeIntros.map((trade) => (
-                <div key={trade.id} className="rounded-lg border border-white/10 bg-slate-900 p-5">
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div>
-                      <p className="text-white font-bold">Intro for {trade.company}</p>
-                      <p className="text-sm text-slate-400">Partner: {trade.offererEmail === email ? "The Requester" : trade.offererName}</p>
-                      <a href={trade.contactLinkedIn} target="_blank" className="text-blue-400 text-xs hover:underline">View Target LinkedIn</a>
-                    </div>
-                    
-                    {/* Only the Requester can "Complete" the trade */}
-                    {trade.requesterEmail === email && (
-                      <form action="/api/trade/complete" method="POST">
-                        <input type="hidden" name="tradeId" value={trade.id} />
-                        <input type="hidden" name="offererEmail" value={trade.offererEmail} />
-                        <button type="submit" className="rounded-lg bg-white/10 px-4 py-2 text-xs font-bold hover:bg-white/20 text-white">
-                          Intro Received (Rate 5⭐)
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* POST FORM */}
-        <div className="mb-12 rounded-xl border border-white/10 bg-slate-900/50 p-6">
-          <h2 className="mb-4 text-lg font-semibold">Request an Intro</h2>
-          <form action="/api/post" method="POST" className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <input type="text" name="company" required placeholder="Target Company" className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-2 text-white outline-none" />
-            <input type="text" name="role" required placeholder="Target Role" className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-2 text-white outline-none" />
-            <input type="text" name="ask" required placeholder="Your Ask" className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-2 text-white outline-none" />
-            <button type="submit" className="rounded-lg bg-orange-600 px-6 py-2 font-bold hover:bg-orange-500">Post</button>
-          </form>
-        </div>
-
-{/* SECTION: MY MANAGEMENT CONSOLE */}
-        {myAsks.length > 0 && (
-          <div className="mb-12">
-            <h2 className="mb-4 text-lg font-semibold text-slate-300">My Active Asks ({myAsks.length})</h2>
-            <div className="grid gap-3">
-              {myAsks.map((ask) => (
-                <div key={ask.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-5 py-3">
-                  <div>
-                    <span className="font-bold text-white">{ask.company}</span>
-                    <span className="ml-3 text-xs text-slate-500 uppercase tracking-widest">{ask.role}</span>
-                  </div>
-                  <form action="/api/post/delete" method="POST">
-                    <input type="hidden" name="postId" value={ask.id} />
-                    <button 
-                      type="submit" 
-                      className="text-xs font-medium text-red-500 hover:text-red-400 transition-colors bg-red-500/10 px-3 py-1 rounded-md border border-red-500/20"
-                    >
-                      Remove Ask
-                    </button>
-                  </form>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* MARKETPLACE */}
-        <div className="grid gap-6">
-          {opportunities.map((item) => (
-            <div key={item.id} className="rounded-xl border border-white/5 bg-white/5 p-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-bold">{item.company}</h3>
-                    <p className="text-orange-500 font-medium">{item.ask}</p>
-                  </div>
-                  <p className="text-xs text-slate-500">By {item.userName}</p>
-                </div>
-
-                {item.userEmail !== email && (
-                  <details className="group">
-                    <summary className="list-none cursor-pointer inline-block rounded-lg bg-white/10 px-4 py-2 text-sm font-bold hover:bg-white/20">
-                      I can help
-                    </summary>
-                    <div className="mt-4 rounded-lg bg-slate-900 p-4 border border-orange-500/20">
-                      <form action="/api/trade" method="POST" className="flex flex-col gap-3">
-                        <input type="hidden" name="opportunityId" value={item.id} />
-                        <input type="hidden" name="company" value={item.company} />
-                        <input type="hidden" name="requesterEmail" value={item.userEmail} />
-                        <input type="url" name="contactLinkedIn" required placeholder="LinkedIn URL" className="w-full rounded bg-slate-950 border border-white/10 px-3 py-2 text-sm text-white" />
-                        <textarea name="relationshipContext" required placeholder="How do you know them?" className="w-full rounded bg-slate-950 border border-white/10 px-3 py-2 text-sm text-white" rows={2} />
-                        <button type="submit" className="w-full rounded bg-orange-600 py-2 text-sm font-bold hover:bg-orange-500">Submit Proof</button>
-                      </form>
-                    </div>
-                  </details>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+        
+        {/* Pinned at the top: Actionable Items */}
+        <MyTrades />
+        
+        {/* The new Tabbed interface handles the rest! */}
+        <DashboardTabs 
+          currentUserEmail={dbUser.email} 
+          currentUserName={dbUser.firstName || 'WarmDoor Member'} 
+        />
+        
+      </div>
     </div>
   );
 }

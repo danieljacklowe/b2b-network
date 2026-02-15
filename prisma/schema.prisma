@@ -4,25 +4,23 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // THIS WAS MISSING VVV
   url      = env("DATABASE_URL")
 }
 
 model WaitlistApplication {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  firstName    String
-  lastName     String
-  linkedIn     String?
-  dealSize     String?
-  icp          String?
-  createdAt    DateTime @default(now())
-  status       String   @default("PENDING") 
-  
-  // ADD THESE TWO LINES BELOW VVV
-  rating       Float    @default(5.0)
-  reviewCount  Int      @default(0)
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String
+  lastName    String
+  linkedIn    String?
+  dealSize    String?
+  icp         String?
+  createdAt   DateTime @default(now())
+  status      String   @default("PENDING") 
+  rating      Float    @default(5.0)
+  reviewCount Int      @default(0)
 }
+
 model Opportunity {
   id        String   @id @default(cuid())
   userEmail String
@@ -32,6 +30,7 @@ model Opportunity {
   ask       String
   createdAt DateTime @default(now())
 }
+
 model Trade {
   id                  String   @id @default(cuid())
   opportunityId       String
@@ -39,12 +38,34 @@ model Trade {
   requesterEmail      String
   offererEmail        String
   offererName         String
-  
-  // The proof fields
   contactLinkedIn     String   
   relationshipContext String   
-  
-  // Statuses: PENDING, ACCEPTED, COMPLETED
   status              String   @default("PENDING") 
   createdAt           DateTime @default(now())
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  firstName   String?
+  connections Connection[] 
+  createdAt   DateTime     @default(now())
+}
+
+model Connection {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  personName   String?  
+  personTitle  String   // e.g., "VP of Engineering"
+  companyName  String   // e.g., "Stripe"
+  industry     String   // e.g., "Fintech"
+  context      String   // e.g., "Former colleague"
+  strength     Int      @default(3) // 1-5 scale
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
